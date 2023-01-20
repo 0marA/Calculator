@@ -12,8 +12,11 @@ const int row3Pin = A1;
 const int row4Pin = A0;
 const int row5Pin = A3;
 
-boolean justRan = false;
-String pressedValue = "";
+String pressedValue = "", requestedMath = "", mathString = "";
+boolean lock = false;
+
+long previousMillis = 0, calculatedValue = 0;
+;
 
 void setup() {
   lcd.begin(16, 2);
@@ -36,41 +39,43 @@ void setup() {
 }
 
 void loop() {
-
   long currentMillis = millis();
-  long previousMillis = 0;
+
   int interval = 5;
   if (currentMillis - previousMillis > interval) {
     previousMillis = currentMillis;
+  }
 
-    checkKeyboard();
-    // checkRow();
+  checkKeyboard();
+}
+
+boolean isKeyPressed() {
+  if (digitalRead(col1Pin) == LOW || digitalRead(col2Pin) == LOW ||
+      digitalRead(col3Pin) == LOW || digitalRead(col4Pin) == LOW)
+    return true;
+  else
+    return true;
+}
+
+void checkKeyboard() {
+  readMatrix();
+  if (lock) {
+    if (pressedValue == "") {
+      lock = false;
+    }
+    return;
+  } else {
+    if (pressedValue == "Del")
+      lcd.clear();
+    else if (pressedValue != "") {
+      Serial.print(pressedValue);
+      lock = true;
+    }
   }
 }
 
-// void checkRow() {
-//   digitalWrite(row1Pin, LOW);
-//   pressedValue = "";
-//
-//   if (digitalRead(col1Pin) == LOW)
-//     pressedValue = "-";
-//   else if (digitalRead(col2Pin) == LOW)
-//     pressedValue = "+";
-//   else if (digitalRead(col3Pin) == LOW)
-//     pressedValue = "/";
-//   else if (digitalRead(col4Pin) == LOW)
-//     pressedValue = "Enter";
-//
-//   if (pressedValue == "Del")
-//     lcd.clear();
-//   else if (pressedValue != "") {
-//     Serial.print(pressedValue);
-//     justRan = true;
-//   }
-//
-// }
-
-void checkKeyboard() {
+void readMatrix() {
+  pressedValue = "";
   for (int i = 1; i < 6; i++) {
     if (i == 1) {
       digitalWrite(row1Pin, LOW);
@@ -93,6 +98,7 @@ void checkKeyboard() {
         pressedValue = "/";
       else if (digitalRead(col4Pin) == LOW)
         pressedValue = "Del";
+
     } else if (i == 2) {
       if (digitalRead(col1Pin) == LOW)
         pressedValue = "+";
@@ -125,19 +131,12 @@ void checkKeyboard() {
         pressedValue = "Enter";
       else if (digitalRead(col2Pin) == LOW)
         pressedValue = ".";
-      else if (digitalRead(col3Pin) == LOW)
+      else if (digitalRead(col3Pin) == LOW || col4Pin == LOW)
         pressedValue = "0";
     }
 
-    if (pressedValue == "Del")
-      lcd.clear();
-    else if (pressedValue != "")
-      Serial.print(pressedValue);
-
     lcd.autoscroll();
     lcd.blink();
-
-    pressedValue = "";
 
     digitalWrite(row1Pin, HIGH);
     digitalWrite(row2Pin, HIGH);
@@ -146,3 +145,21 @@ void checkKeyboard() {
     digitalWrite(row5Pin, HIGH);
   }
 }
+
+// long calculate() {
+//   for (int i = 0; i < mathString.length; i++) {
+//     if (mathString[i] == '+') {
+//       requestedMath = "+";
+//       break;
+//     } else if (mathString[i] == '-') {
+//       requestedMath = "-";
+//       break;
+//     } else if (mathString[i] == 'x') {
+//       requestedMath = "x";
+//       break;
+//     } else if (mathString[i] == '/') {
+//       requestedMath = "/";
+//       break;
+//     }
+//   }
+// }
