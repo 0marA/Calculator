@@ -12,16 +12,15 @@ const int row3Pin = A1;
 const int row4Pin = A0;
 const int row5Pin = A3;
 
-String pressedValue = "", requestedMath = "", mathString = "";
-boolean lock = false;
-
-long previousMillis = 0, calculatedValue = 0;
-;
+String pressedValue = "", expression = "", number = "";
+boolean lock = false, greeting = true;
+int arrayIndex = 0;
+double numbers[50];
+String operators[50];
 
 void setup() {
   lcd.begin(16, 2);
   analogWrite(10, 100);
-  Serial.begin(9600);
 
   pinMode(col1Pin, INPUT_PULLUP);
   pinMode(col2Pin, INPUT_PULLUP);
@@ -35,27 +34,10 @@ void setup() {
   pinMode(row5Pin, OUTPUT);
 
   lcd.home();
-  lcd.print("Ready");
+  lcd.print("Hello!");
 }
 
-void loop() {
-  long currentMillis = millis();
-
-  int interval = 5;
-  if (currentMillis - previousMillis > interval) {
-    previousMillis = currentMillis;
-  }
-
-  checkKeyboard();
-}
-
-boolean isKeyPressed() {
-  if (digitalRead(col1Pin) == LOW || digitalRead(col2Pin) == LOW ||
-      digitalRead(col3Pin) == LOW || digitalRead(col4Pin) == LOW)
-    return true;
-  else
-    return true;
-}
+void loop() { checkKeyboard(); }
 
 void checkKeyboard() {
   readMatrix();
@@ -65,11 +47,23 @@ void checkKeyboard() {
     }
     return;
   } else {
-    if (pressedValue == "Del")
+    if (pressedValue == "Del") {
       lcd.clear();
-    else if (pressedValue != "") {
-      Serial.print(pressedValue);
+      lcd.home();
+      expression = "";
+    } else if (pressedValue == "Enter") {
+      calculate();
+    } else if (pressedValue != "") {
+      if (greeting) {
+        lcd.clear();
+        greeting = false;
+        
+      }
+
+      lcd.print(pressedValue);
+      expression += pressedValue;
       lock = true;
+
     }
   }
 }
@@ -135,9 +129,6 @@ void readMatrix() {
         pressedValue = "0";
     }
 
-    lcd.autoscroll();
-    lcd.blink();
-
     digitalWrite(row1Pin, HIGH);
     digitalWrite(row2Pin, HIGH);
     digitalWrite(row3Pin, HIGH);
@@ -146,20 +137,42 @@ void readMatrix() {
   }
 }
 
-// long calculate() {
-//   for (int i = 0; i < mathString.length; i++) {
-//     if (mathString[i] == '+') {
-//       requestedMath = "+";
-//       break;
-//     } else if (mathString[i] == '-') {
-//       requestedMath = "-";
-//       break;
-//     } else if (mathString[i] == 'x') {
-//       requestedMath = "x";
-//       break;
-//     } else if (mathString[i] == '/') {
-//       requestedMath = "/";
-//       break;
-//     }
-//   }
-// }
+void calculate() {
+  number = "";
+  int arrayIndex = 0;
+  double numbers[50];
+  String operators[50];
+  for (int i = 0; i < expression.length(); i++) {
+    if (isDigit(expression[i])) {
+      number += expression[i];
+    } else {
+      numbers[arrayIndex] = number.toDouble();
+      operators[arrayIndex] = expression[i];
+      arrayIndex++;
+      number = "";
+    }
+  }
+  numbers[arrayIndex] = number.toDouble();
+  double result = numbers[0];
+  for (int i = 0; i < arrayIndex; i++) {
+    if (operators[i] == "+") {
+      result += numbers[i + 1];
+    } else if (operators[i] == "-") {
+      result -= numbers[i + 1];
+    } else if (operators[i] == "x") {
+      result *= numbers[i + 1];
+    } else if (operators[i] == "/") {
+      result /= numbers[i + 1];
+    }
+  }
+
+  lcd.clear();
+  lcd.home();
+  lcd.print(result);
+  greeting = true;
+}
+
+boolean isKeyPressed() {
+  return (digitalRead(col1Pin) == LOW || digitalRead(col2Pin) == LOW ||
+          digitalRead(col3Pin) == LOW || digitalRead(col4Pin) == LOW);
+}
